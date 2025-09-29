@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Оформить заявку на услугу - Белфорт</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .content-section {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+    .support-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .form-group {
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .form-group .error {
+      border-color: #dc3545;
+    }
+    .error-text {
+      color: #dc3545;
+      font-size: 0.9em;
+      margin-top: 5px;
+      display: block;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="content-section">
+    <h1>Оформить заявку на услугу</h1>
+    <form id="serviceRequestForm">
+      <div class="form-group">
+        <label for="name">Имя:</label>
+        <input type="text" id="name" name="name">
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email">
+      </div>
+      <div class="form-group">
+        <label for="serviceType">Тип услуги:</label>
+        <select id="serviceType" name="serviceType">
+          <option value="">Выберите тип услуги</option>
+          <option value="Разработка ПО">Разработка программного обеспечения</option>
+          <option value="Цифровая трансформация">Консультации по цифровой трансформации</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="specificService">Конкретная услуга:</label>
+        <select id="specificService" name="specificService" disabled>
+          <option value="">Выберите услугу</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="comment">Комментарий (пожелания или подробности):</label>
+        <textarea id="comment" name="comment" rows="4" placeholder="Опишите ваши пожелания или проблему..."></textarea>
+      </div>
+      <button type="submit" id="submitButton">Отправить</button>
+    </form>
+    <p id="statusMessage" style="color: green; display: none;">Заявка успешно отправлена!</p>
+  </div>
+  <script>
+    const serviceOptions = {
+      'Разработка ПО': ['Веб-разработка', 'Мобильная разработка', 'Разработка desktop-приложений'],
+      'Цифровая трансформация': ['Аудит IT-инфраструктуры', 'Внедрение CRM-систем', 'Консультации по облачным технологиям'],
+    };
+
+    const form = document.getElementById('serviceRequestForm');
+    const serviceType = document.getElementById('serviceType');
+    const specificService = document.getElementById('specificService');
+    const submitButton = document.getElementById('submitButton');
+    const statusMessage = document.getElementById('statusMessage');
+
+    serviceType.addEventListener('change', () => {
+      specificService.innerHTML = '<option value="">Выберите услугу</option>';
+      if (serviceType.value) {
+        specificService.disabled = false;
+        serviceOptions[serviceType.value].forEach(option => {
+          const opt = document.createElement('option');
+          opt.value = option;
+          opt.textContent = option;
+          specificService.appendChild(opt);
+        });
+      } else {
+        specificService.disabled = true;
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const serviceTypeValue = serviceType.value;
+      const specificServiceValue = specificService.value;
+      const comment = document.getElementById('comment').value;
+
+      if (!name || !email || !serviceTypeValue || !specificServiceValue || !comment) {
+        alert('Все поля обязательны');
+        return;
+      }
+
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        alert('Введите корректный email');
+        return;
+      }
+
+      submitButton.disabled = true;
+      try {
+        const response = await fetch('/api/service-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, serviceType: serviceTypeValue, specificService: specificServiceValue, comment }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          statusMessage.style.display = 'block';
+          form.reset();
+          specificService.disabled = true;
+          setTimeout(() => {
+            statusMessage.style.display = 'none';
+            submitButton.disabled = false;
+          }, 3000);
+        } else {
+          throw new Error(data.error || 'Ошибка сервера');
+        }
+      } catch (err) {
+        alert(`Не удалось отправить заявку: ${err.message}`);
+        submitButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
